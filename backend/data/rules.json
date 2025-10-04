@@ -1,0 +1,209 @@
+[
+  {
+    "id": "0f825fa8-e97d-435e-90ff-311900d1ad4a",
+    "name": "Financial Eligibility",
+    "description": "Complex financial eligibility check - must meet all criteria OR have high net worth",
+    "expression": "(age >= 21 AND credit_score >= 700 AND debt_ratio < 0.4) OR net_worth > 1000000"
+  },
+  {
+    "id": "c3bf418d-d5c3-4fdd-984d-4cff14e9627b",
+    "name": "Geographic Eligibility",
+    "description": "Allow North America or Europe with good credit",
+    "expression": "(country in ['USA', 'Canada']) OR (country in ['UK', 'Germany'] AND credit_score >= 650)"
+  },
+  {
+    "id": "d1963b85-007f-447f-a74e-d1f1ab2d9dbe",
+    "name": "Fraud Detection",
+    "description": "Comprehensive fraud check with field-to-field comparison",
+    "expression": "login_attempts <= 3 AND ip_country == account_country AND notes not_contains 'fraud'"
+  },
+  {
+    "id": "44a2461d-01dd-400b-8068-77897e2c2b6c",
+    "name": "Age Verification with Parental Consent",
+    "description": "Must be 21+ OR be 18+ with parental consent",
+    "expression": "age >= 21 OR (age >= 18 AND parental_consent == true)"
+  },
+  {
+    "id": "8f29ecf7-63a7-4e4d-8245-bb3d7f6559b6",
+    "name": "Complex Nested Logic",
+    "description": "Deeply nested expression with multiple branches",
+    "expression": "((a == 1 AND b == 2) OR (c == 3 AND d == 4)) AND (e == 5 OR f == 6)"
+  },
+  {
+    "id": "4f5d2819-af8d-4351-8322-e641b93103ac",
+    "name": "Premium Membership Eligibility",
+    "description": "Premium membership requires high score OR VIP status OR high lifetime value",
+    "expression": "(status == 'premium' AND years >= 5) OR status == 'vip' OR lifetime_value > 50000"
+  },
+  {
+    "id": "7e936fcb-5c09-4085-9e37-b9e7019a593b",
+    "name": "Password and Security Check",
+    "description": "Field-to-field comparison for password confirmation",
+    "expression": "password == confirm_password AND password_length >= 8"
+  },
+  {
+    "id": "de0f69d3-e5fc-49b5-b506-4b72b271e58f",
+    "name": "Date Range Validation",
+    "description": "Field-to-field date comparison ensuring proper order",
+    "expression": "start_date < end_date AND status == 'active'"
+  },
+  {
+    "id": "147e23ea-4b45-4d6b-a649-195b66f924b7",
+    "name": "Balance Check",
+    "description": "Current balance must exceed minimum balance requirement",
+    "expression": "current_balance >= minimum_balance AND withdrawal_amount <= daily_limit"
+  },
+  {
+    "id": "1753d1a2-ab56-47a5-8f72-d200748f0ca7",
+    "name": "Premium User Check (AND)",
+    "description": "User must meet all premium criteria",
+    "predicates": [
+      {
+        "field": "account_type",
+        "operator": "==",
+        "value": "premium"
+      },
+      {
+        "field": "subscription_months",
+        "operator": ">=",
+        "value": 12
+      },
+      {
+        "field": "payment_status",
+        "operator": "==",
+        "value": "current"
+      }
+    ],
+    "logical_operator": "AND"
+  },
+  {
+    "id": "8742d807-74dc-45c6-a4d7-94c599d9e095",
+    "name": "Enterprise Customer Qualification (AND)",
+    "description": "Must meet all enterprise requirements",
+    "predicates": [
+      {
+        "field": "company_size",
+        "operator": ">=",
+        "value": 100
+      },
+      {
+        "field": "annual_revenue",
+        "operator": ">",
+        "value": 1000000
+      },
+      {
+        "field": "industry",
+        "operator": "in",
+        "value": ["technology", "finance", "healthcare"]
+      },
+      {
+        "field": "credit_rating",
+        "operator": ">=",
+        "value": 700
+      }
+    ],
+    "logical_operator": "AND"
+  },
+  {
+    "id": "e8ca12c0-2996-4fc0-b654-31b29d5b83bb",
+    "name": "Shipping Eligibility (AND)",
+    "description": "All shipping requirements must be met",
+    "predicates": [
+      {
+        "field": "weight",
+        "operator": "<=",
+        "value": 50
+      },
+      {
+        "field": "destination_country",
+        "operator": "in",
+        "value": ["USA", "Canada", "UK", "Germany", "France"]
+      },
+      {
+        "field": "hazmat",
+        "operator": "==",
+        "value": false
+      }
+    ],
+    "logical_operator": "AND"
+  },
+  {
+    "id": "200831c7-e19b-47f8-992c-7bbea1d68d3a",
+    "name": "Discount Eligibility (OR)",
+    "description": "Qualifies for discount if any condition is met",
+    "predicates": [
+      {
+        "field": "loyalty_points",
+        "operator": ">=",
+        "value": 1000
+      },
+      {
+        "field": "student",
+        "operator": "==",
+        "value": true
+      },
+      {
+        "field": "senior_citizen",
+        "operator": "==",
+        "value": true
+      },
+      {
+        "field": "member_years",
+        "operator": ">=",
+        "value": 5
+      }
+    ],
+    "logical_operator": "OR"
+  },
+  {
+    "id": "2f2dd49b-57ca-4573-88b2-48bd407dee2e",
+    "name": "Priority Support Access (OR)",
+    "description": "Gets priority support if any tier is met",
+    "predicates": [
+      {
+        "field": "subscription_tier",
+        "operator": "in",
+        "value": ["gold", "platinum", "diamond"]
+      },
+      {
+        "field": "support_tickets_count",
+        "operator": ">",
+        "value": 10
+      },
+      {
+        "field": "is_vip",
+        "operator": "==",
+        "value": true
+      }
+    ],
+    "logical_operator": "OR"
+  },
+  {
+    "id": "cfabe4f8-ff3a-44f5-9daf-ebc7269fa268",
+    "name": "Content Access (OR)",
+    "description": "Access granted if user meets any access criteria",
+    "predicates": [
+      {
+        "field": "subscription_active",
+        "operator": "==",
+        "value": true
+      },
+      {
+        "field": "free_trial_days",
+        "operator": ">",
+        "value": 0
+      },
+      {
+        "field": "promotional_code",
+        "operator": "contains",
+        "value": "ACCESS"
+      },
+      {
+        "field": "user_role",
+        "operator": "in",
+        "value": ["admin", "moderator", "premium"]
+      }
+    ],
+    "logical_operator": "OR"
+  }
+]

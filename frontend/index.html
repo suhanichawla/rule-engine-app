@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekord Rules Evaluator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Rekord Rules Evaluator</h1>
+            <p class="subtitle">Transparent decision-making for regulated entities</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('rules')">Rules Management</button>
+            <button class="tab-button" onclick="showTab('evaluate')">Evaluate</button>
+        </div>
+
+        <!-- Rules Management Tab -->
+        <div id="rules-tab" class="tab-content active">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Rules</h2>
+                    <button class="btn btn-primary" onclick="showCreateRuleModal()">+ Create Rule</button>
+                </div>
+
+                <div id="rules-list" class="rules-list">
+                    <div class="loading">Loading rules...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluate Tab -->
+        <div id="evaluate-tab" class="tab-content">
+            <div class="section">
+                <h2>Evaluate Payload</h2>
+
+                <div class="form-group">
+                    <label for="payload-input">JSON Payload</label>
+                    <textarea id="payload-input" rows="10" placeholder='{
+  "age": 25,
+  "credit_score": 720,
+  "country": "USA",
+  "annual_income": 60000
+}'></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="rule-ids-input">Rule IDs (comma-separated)</label>
+                    <input type="text" id="rule-ids-input" placeholder="550e8400-e29b-41d4-a716-446655440001, 550e8400-e29b-41d4-a716-446655440002">
+                    <small>Or select rules:</small>
+                    <div id="rule-checkboxes" class="rule-checkboxes"></div>
+                </div>
+
+                <button class="btn btn-primary" onclick="evaluatePayload()">Evaluate</button>
+
+                <div id="evaluation-result" class="evaluation-result" style="display: none;">
+                    <h3>Evaluation Result</h3>
+                    <div id="result-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Rule Modal -->
+    <div id="rule-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Create Rule</h2>
+                <span class="close" onclick="closeRuleModal()">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="edit-rule-id">
+
+                <div class="form-group">
+                    <label for="rule-name">Name</label>
+                    <input type="text" id="rule-name" placeholder="Age Verification">
+                </div>
+
+                <div class="form-group">
+                    <label for="rule-description">Description</label>
+                    <textarea id="rule-description" rows="2" placeholder="Verify that applicant meets minimum age requirement"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Rule Type</label>
+                    <div class="rule-type-toggle">
+                        <label class="radio-label">
+                            <input type="radio" name="rule-type" value="predicates" checked onchange="toggleRuleType()">
+                            <span>Predicates</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="rule-type" value="expression" onchange="toggleRuleType()">
+                            <span>Expression</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="predicates-section" class="form-group" style="display: block;">
+                    <label>Predicates</label>
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <label for="logical-operator">Logical Operator</label>
+                        <select id="logical-operator">
+                            <option value="AND">AND (all must match)</option>
+                            <option value="OR">OR (at least one must match)</option>
+                        </select>
+                    </div>
+                    <div id="predicates-container"></div>
+                    <button class="btn btn-secondary" onclick="addPredicate()">+ Add Predicate</button>
+                    <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                        <strong>Array values:</strong> Use JSON format like ["USA", "Canada"] for 'in' or 'not_in' operators
+                    </small>
+                </div>
+
+                <div id="expression-section" class="form-group" style="display: none;">
+                    <label for="rule-expression">Expression</label>
+                    <textarea id="rule-expression" rows="4" placeholder="age >= 18 AND (country == 'USA' OR country == 'Canada')"></textarea>
+                    <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                        Examples:<br>
+                        • age >= 18 AND credit_score > 700<br>
+                        • (age >= 21 AND score > 700) OR income > 100000<br>
+                        • country in ['USA', 'Canada'] AND active == true
+                    </small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRuleModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveRule()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
