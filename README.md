@@ -1,188 +1,206 @@
-# 🎯 Rekord Rules Evaluator
+# Rekord Rule Evaluator System - Summary
 
-A transparent, containerized rules evaluation service for regulated entities. This platform provides clear decision-making through well-defined rules with comprehensive reasoning.
+## Overview
 
-## 🌟 Features
+The **Rekord Rule Evaluator System** is a transparent, containerized decision-making platform designed for regulated entities that require clear, auditable rule evaluation. The system provides a RESTful API for creating, managing, and evaluating complex business rules against JSON payloads, returning clear PASS/FAIL results with detailed reasoning for each decision.
 
-- **Rule Management**: Complete CRUD operations for rule definitions
-- **Transparent Evaluation**: Clear PASS/FAIL results with detailed reasoning
-- **Multiple Operators**: Support for comparison, containment, and membership operators
-- **RESTful API**: Clean, well-documented API with OpenAPI/Swagger
-- **Modern UI**: Simple, intuitive web interface for rule management and evaluation
-- **Containerized**: Docker-based deployment with single-command startup
-- **Clean Architecture**: Hexagonal (Ports & Adapters) architecture for maintainability
+**Key Capabilities:**
+- Define rules using either simple predicates (either ANDing or ORing them) or complex expressions
+- Evaluate JSON payloads against multiple rules simultaneously
+- Receive detailed, human-readable explanations for every decision
+- Support for both AND/OR logical operators in predicates
+- Field-to-field comparisons possible in expressions
+- Complete CRUD operations for rule management
+- Modern web UI for interactive rule management
 
-## 🏗️ Architecture
+---
 
-This project follows **Hexagonal Architecture** (Ports and Adapters pattern):
+## Technology Stack
 
+**Backend:**
+- **Python 3.11**
+- **FastAPI**: for the server
+- **Pydantic**: for data validation and serialization
+- **Swagger**: for api docs
+
+There is a frontend to interact easily with the app, hosted on port 8080
+
+**Frontend:**
+- **Vanilla JavaScript**: No framework dependencies, lightweight
+- **Modern CSS**: CSS variables, responsive design
+- **Nginx**: Production-ready web server
+
+**Infrastructure:**
+- **Docker & Docker Compose**: Containerization and orchestration
+- **JSON File Storage**: Simple, portable persistence layer
+
+---
+
+## Features
+
+### 1. **Flexible Rule Definition**
+
+Rules can be defined in two powerful ways:
+
+#### A. Predicate-Based Rules
+Simple list of conditions with configurable AND/OR logic:
+```json
+{
+  "name": "Premium User Check",
+  "description": "User must meet all premium criteria",
+  "predicates": [
+    {"field": "account_type", "operator": "==", "value": "premium"},
+    {"field": "subscription_months", "operator": ">=", "value": 12}
+  ],
+  "logical_operator": "AND" //can also be OR
+}
 ```
-backend/
-├── src/
-│   ├── domain/           # Core business logic
-│   │   ├── models.py     # Domain entities (Rule, Predicate, etc.)
-│   │   └── exceptions.py # Domain-specific exceptions
-│   ├── application/      # Use cases and business orchestration
-│   │   ├── ports.py      # Interface definitions (RuleRepository)
-│   │   └── services.py   # Business logic (RuleService, EvaluationService)
-│   ├── adapters/         # External interfaces
-│   │   ├── inbound/      # API endpoints (FastAPI routes)
-│   │   └── outbound/     # External services (FileRepository)
-│   ├── infrastructure/   # Configuration and setup
-│   └── main.py          # Application entry point
-└── data/
-    └── rules.json       # Persistent rule storage
+AND is also the default if no logical_operator is specified
+
+#### B. Expression-Based Rules
+Complex boolean expressions with nested logic:
+```json
+{
+  "name": "Financial Eligibility",
+  "description": "Complex eligibility check",
+  "expression": "(age >= 21 AND credit_score >= 700) OR net_worth > 1000000"
+}
 ```
+One of the main features in this system is the parsing of the complex expressions. This is done by first tokenizing them and then converting them into an AST and then evaluating the AST.
 
-### Why Hexagonal Architecture?
+### 2. **Rich Operator Support**
 
-- **Testability**: Business logic is independent of external dependencies
-- **Flexibility**: Easy to swap implementations (e.g., file storage → database)
-- **Maintainability**: Clear separation of concerns
-- **Domain-Driven**: Business rules at the center, infrastructure at the edges
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `==` | Equals | `age == 18` |
+| `!=` | Not equals | `status != "banned"` |
+| `>` | Greater than | `score > 100` |
+| `>=` | Greater than or equal | `age >= 21` |
+| `<` | Less than | `debt < 1000` |
+| `<=` | Less than or equal | `attempts <= 3` |
+| `contains` | String/list contains | `tags contains "premium"` |
+| `not_contains` | String/list does not contain | `notes not_contains "fraud"` |
+| `in` | Value in list | `country in ["USA", "Canada"]` |
+| `not_in` | Value not in list | `status not_in ["banned", "suspended"]` |
 
-## 🚀 Quick Start
+### 3. **Advanced Expression Features**
 
-### Prerequisites
+- **Boolean Logic**: Support for `AND`, `OR` operators with proper precedence
+- **Parentheses**: Group expressions for complex nested logic
+- **Field-to-Field Comparison**: Compare payload fields to each other
+  ```javascript
+  ip_country == account_country
+  password == confirm_password
+  start_date < end_date
+  current_balance >= minimum_balance
+  ```
+- **Type Support**: Numbers (int/float), strings, booleans, null, arrays
+- **Expression Validation**: Syntax errors caught at rule creation time
 
-- Docker and Docker Compose installed
-- Ports 8000 (backend) and 8080 (frontend) available
+### 4. **Transparent Decision-Making**
 
-### Running the Application
+Every evaluation returns:
+- **Overall Result**: PASS or FAIL
+- **Detailed Reasons**: Human-readable explanations for each condition
+- **Predicate-Level Results**: See exactly which conditions passed/failed
+- **Actual vs Expected Values**: Full transparency for auditing
+
+Note that the predicate level results will be returned even if it is an chain of ORs. This is because we want the user to be aware of every failing predicate. For example, if this was a banking application and they had the option of providing either a utility bill + RTB letter or providing the lease as an option and they only provided the RTB letter, we need to tell them they are missing a utility bill as well as a lease. If they provided just the lease, the rule will PASS but will tell them if there are any failing predicates.
+
+### 5. **Complete CRUD API**
+
+- `GET /api/v1/rules` - List all rules
+- `GET /api/v1/rules/{id}` - Get specific rule
+- `POST /api/v1/rules` - Create new rule
+- `PUT /api/v1/rules/{id}` - Update existing rule
+- `DELETE /api/v1/rules/{id}` - Delete rule
+- `POST /api/v1/evaluate` - Evaluate payload against rules
+
+
+### 6. **Interactive Documentation**
+
+- **Swagger UI**: http://localhost:8000/docs
+- Auto-generated from code with examples
+
+---
+
+## Rules Format and Evaluation Strategy
+
+Rules can be defined using either **predicates** or **expressions**:
+
+**Predicates**: Simple conditions combined with AND/OR logic
+- Multiple predicates evaluated independently
+- AND logic: ALL predicates must pass
+- OR logic: At least ONE predicate must pass
+- Each predicate tracked for detailed reporting
+
+**Expressions**: Complex boolean expressions with nested logic
+- Supports AND, OR, parentheses for grouping
+- Field-to-field comparisons
+- Operator precedence: Parentheses → Comparisons → AND → OR
+- Parsed into Abstract Syntax Tree (AST) for evaluation
+
+For detailed technical information about the expression parser implementation, AST structure, and evaluation algorithms, see [technical_architecture.md](./docs/technical_architecture.md).
+
+---
+
+## Docker Setup
+
+### Single Command Startup
 
 ```bash
-# Clone the repository (if applicable)
-cd rekord
-
-# Start the services
+# From project root
 docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop the services
-docker-compose down
 ```
 
-The services will be available at:
+This command will:
+1. Build the backend Docker image
+2. Start the backend container on port 8000
+3. Start the frontend container on port 8080
+4. Create a Docker network for service communication
+5. Mount the `backend/data` directory for persistence
+
+
+Once you run the docker command, the following services should become available
+
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 - **Frontend UI**: http://localhost:8080
 
-## 📚 API Documentation
+## Demo
 
-### Supported Operators
+### Video Walkthrough
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `==` | Equals | `{"field": "age", "operator": "==", "value": 18}` |
-| `!=` | Not equals | `{"field": "status", "operator": "!=", "value": "rejected"}` |
-| `>` | Greater than | `{"field": "score", "operator": ">", "value": 100}` |
-| `>=` | Greater than or equal | `{"field": "age", "operator": ">=", "value": 21}` |
-| `<` | Less than | `{"field": "debt", "operator": "<", "value": 1000}` |
-| `<=` | Less than or equal | `{"field": "attempts", "operator": "<=", "value": 3}` |
-| `contains` | String/list contains value | `{"field": "tags", "operator": "contains", "value": "premium"}` |
-| `not_contains` | String/list does not contain | `{"field": "notes", "operator": "not_contains", "value": "fraud"}` |
-| `in` | Value in list | `{"field": "country", "operator": "in", "value": ["USA", "Canada"]}` |
-| `not_in` | Value not in list | `{"field": "status", "operator": "not_in", "value": ["banned", "suspended"]}` |
 
-### Predicate Logic
+### Live Demo
+The current setup is hosted on an ec2
+- **Frontend**: http://ec2-13-61-145-69.eu-north-1.compute.amazonaws.com:8080
+- **Backend API**: http://ec2-13-61-145-69.eu-north-1.compute.amazonaws.com:8000
 
-- Multiple predicates in a rule are combined with **AND** logic
-- All predicates must evaluate to `true` for the rule to pass
-- If any predicate fails, the entire rule fails
+---
 
-### API Endpoints
+## Sample curl Requests
 
-#### List All Rules
-```http
-GET /api/v1/rules
-```
+The system comes pre-loaded with several example rules. Here are some practical curl examples using these rules:
 
-**Response:**
-```json
-[
-  {
-    "id": "550e8400-e29b-41d4-a716-446655440001",
-    "name": "Age Verification",
-    "description": "Verify minimum age requirement",
-    "predicates": [
-      {
-        "field": "age",
-        "operator": ">=",
-        "value": 18
-      }
-    ],
-    "effect": "PASS",
-    "reason": "Applicant meets minimum age requirement"
-  }
-]
-```
+### Example 1: PASS Scenario ✓
 
-#### Get Rule by ID
-```http
-GET /api/v1/rules/{rule_id}
-```
+**Rule**: Financial Eligibility
+**Expression**: `(age >= 21 AND credit_score >= 700 AND debt_ratio < 0.4) OR net_worth > 1000000`
+**Scenario**: User meets all criteria in the first branch (age, credit score, debt ratio)
 
-#### Create Rule
-```http
-POST /api/v1/rules
-Content-Type: application/json
-
-{
-  "name": "Credit Score Check",
-  "description": "Verify acceptable credit score",
-  "predicates": [
-    {
-      "field": "credit_score",
-      "operator": ">=",
-      "value": 650
-    }
-  ],
-  "effect": "PASS",
-  "reason": "Credit score meets minimum threshold"
-}
-```
-
-**Response:** `201 Created` with the created rule (including generated UUID)
-
-#### Update Rule
-```http
-PUT /api/v1/rules/{rule_id}
-Content-Type: application/json
-
-{
-  "name": "Updated Rule Name",
-  "description": "Updated description",
-  "predicates": [...],
-  "effect": "PASS",
-  "reason": "Updated reason"
-}
-```
-
-#### Delete Rule
-```http
-DELETE /api/v1/rules/{rule_id}
-```
-
-**Response:** `204 No Content`
-
-#### Evaluate Payload
-```http
-POST /api/v1/evaluate
-Content-Type: application/json
-
-{
-  "payload": {
-    "age": 25,
-    "credit_score": 720,
-    "country": "USA"
-  },
-  "rule_ids": [
-    "550e8400-e29b-41d4-a716-446655440001",
-    "550e8400-e29b-41d4-a716-446655440002"
-  ]
-}
+```bash
+curl -X POST http://localhost:8000/api/v1/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": {
+      "age": 25,
+      "credit_score": 750,
+      "debt_ratio": 0.3,
+      "net_worth": 500000
+    },
+    "rule_ids": ["0f825fa8-e97d-435e-90ff-311900d1ad4a"]
+  }'
 ```
 
 **Response:**
@@ -190,22 +208,46 @@ Content-Type: application/json
 {
   "result": "PASS",
   "reasons": [
-    "Age Verification: Applicant meets minimum age requirement",
-    "Credit Score Check: Credit score meets minimum threshold"
+    "Financial Eligibility: Financial Eligibility passed all conditions"
   ],
   "details": [
     {
-      "rule_id": "550e8400-e29b-41d4-a716-446655440001",
-      "rule_name": "Age Verification",
+      "rule_id": "0f825fa8-e97d-435e-90ff-311900d1ad4a",
+      "rule_name": "Financial Eligibility",
       "result": "PASS",
-      "reason": "Applicant meets minimum age requirement",
+      "reason": "Financial Eligibility passed all conditions",
       "predicate_results": [
         {
           "field": "age",
           "operator": ">=",
-          "expected": 18,
+          "expected": 21,
           "actual": 25,
-          "passed": true
+          "passed": true,
+          "reason": "age passed >= check"
+        },
+        {
+          "field": "credit_score",
+          "operator": ">=",
+          "expected": 700,
+          "actual": 750,
+          "passed": true,
+          "reason": "credit_score passed >= check"
+        },
+        {
+          "field": "debt_ratio",
+          "operator": "<",
+          "expected": 0.4,
+          "actual": 0.3,
+          "passed": true,
+          "reason": "debt_ratio passed < check"
+        },
+        {
+          "field": "net_worth",
+          "operator": ">",
+          "expected": 1000000,
+          "actual": 500000,
+          "passed": false,
+          "reason": "net_worth (500000) must be greater than 1000000"
         }
       ]
     }
@@ -213,209 +255,255 @@ Content-Type: application/json
 }
 ```
 
-## 🧪 Example Use Cases
+**Note**: Even though `net_worth` check failed, the rule passes because the first branch of the OR expression (age AND credit_score AND debt_ratio) succeeded. This demonstrates the transparency feature - all predicate results are shown even when the rule passes.
 
-### Example 1: Simple Age Check
+### Example 2: FAIL Scenario ✗
 
-**Rule:**
-```json
-{
-  "name": "Age Verification",
-  "description": "Must be 18 or older",
-  "predicates": [
-    {"field": "age", "operator": ">=", "value": 18}
-  ],
-  "effect": "PASS",
-  "reason": "Applicant is of legal age"
-}
-```
-
-**Payload:**
-```json
-{"age": 25}
-```
-
-**Result:** `PASS` ✓
-
-### Example 2: Multi-Criteria Evaluation
-
-**Rule:**
-```json
-{
-  "name": "Premium Eligibility",
-  "description": "Premium tier requirements",
-  "predicates": [
-    {"field": "age", "operator": ">=", "value": 21},
-    {"field": "credit_score", "operator": ">=", "value": 700},
-    {"field": "annual_income", "operator": ">", "value": 50000}
-  ],
-  "effect": "PASS",
-  "reason": "Meets all premium criteria"
-}
-```
-
-**Payload:**
-```json
-{
-  "age": 30,
-  "credit_score": 750,
-  "annual_income": 75000
-}
-```
-
-**Result:** `PASS` ✓ (all predicates satisfied)
-
-### Example 3: Geographic Restriction
-
-**Rule:**
-```json
-{
-  "name": "Geographic Check",
-  "description": "Service available in specific countries",
-  "predicates": [
-    {
-      "field": "country",
-      "operator": "in",
-      "value": ["USA", "Canada", "UK"]
-    }
-  ],
-  "effect": "PASS",
-  "reason": "Service available in applicant's region"
-}
-```
-
-## 🛠️ Development
-
-### Local Development (without Docker)
+**Rule**: Financial Eligibility
+**Expression**: `(age >= 21 AND credit_score >= 700 AND debt_ratio < 0.4) OR net_worth > 1000000`
+**Scenario**: User fails multiple criteria - doesn't meet any branch of the OR expression
 
 ```bash
-# Backend
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cd src
-python main.py
-
-# Frontend (serve with any static server)
-cd frontend
-python -m http.server 8080
+curl -X POST http://localhost:8000/api/v1/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": {
+      "age": 20,
+      "credit_score": 650,
+      "debt_ratio": 0.5,
+      "net_worth": 50000
+    },
+    "rule_ids": ["0f825fa8-e97d-435e-90ff-311900d1ad4a"]
+  }'
 ```
 
-### Project Structure
-
-```
-rekord/
-├── backend/
-│   ├── src/
-│   │   ├── domain/          # Business entities and logic
-│   │   ├── application/     # Use cases and ports
-│   │   ├── adapters/        # External interfaces
-│   │   ├── infrastructure/  # Configuration
-│   │   └── main.py         # Application entry
-│   ├── data/
-│   │   └── rules.json      # Rule persistence
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── index.html
-│   ├── style.css
-│   └── app.js
-├── docker-compose.yml
-└── README.md
-```
-
-### Technology Stack
-
-**Backend:**
-- Python 3.11
-- FastAPI (modern, fast web framework)
-- Pydantic (data validation)
-- Uvicorn (ASGI server)
-
-**Frontend:**
-- Vanilla JavaScript (no framework dependencies)
-- Modern CSS with CSS variables
-- Responsive design
-
-**Infrastructure:**
-- Docker & Docker Compose
-- Nginx (frontend server)
-
-## 🔧 Configuration
-
-### Environment Variables
-
-- `HOST`: Server host (default: `0.0.0.0`)
-- `PORT`: Server port (default: `8000`)
-
-### Data Persistence
-
-Rules are persisted in `backend/data/rules.json`. This file is:
-- Automatically created on first run if it doesn't exist
-- Mounted as a Docker volume for persistence across container restarts
-- Thread-safe with file locking
-
-## 🧹 Best Practices Implemented
-
-1. **Clean Architecture**: Separation of concerns with hexagonal architecture
-2. **Type Safety**: Pydantic models for request/response validation
-3. **Error Handling**: Comprehensive exception handling with meaningful messages
-4. **Thread Safety**: File operations protected with locks
-5. **API Documentation**: Auto-generated OpenAPI/Swagger documentation
-6. **CORS Support**: Configured for cross-origin requests
-7. **Health Checks**: Endpoint for monitoring service health
-8. **Deterministic**: Same input always produces same output
-9. **Immutability**: Domain models designed to be immutable
-10. **Single Responsibility**: Each class/module has one clear purpose
-
-## 📝 Design Decisions
-
-1. **File-based Storage**: Simple JSON file storage for ease of setup and portability. Can easily be replaced with database via repository pattern.
-
-2. **UUID for IDs**: Universally unique identifiers prevent collisions and enable distributed scenarios.
-
-3. **AND Logic**: Multiple predicates use AND by default for strict validation. This is the most common use case in compliance scenarios.
-
-4. **Explicit Effects**: Rules explicitly declare their effect (PASS/FAIL) rather than implicit success/failure for clarity.
-
-5. **Detailed Reasoning**: Every evaluation includes predicate-level results for full transparency and auditability.
-
-## 🚨 Error Handling
-
-The API provides clear error messages:
-
-- `400 Bad Request`: Invalid input, validation errors
-- `404 Not Found`: Rule ID not found
-- `500 Internal Server Error`: Unexpected server errors
-
-Example error response:
+**Response:**
 ```json
 {
-  "detail": "Rule with id '123' not found"
+  "result": "FAIL",
+  "reasons": [
+    "Financial Eligibility: age (20) must be at least 21; credit_score (650) must be at least 700; debt_ratio (0.5) must be less than 0.4; net_worth (50000) must be greater than 1000000"
+  ],
+  "details": [
+    {
+      "rule_id": "0f825fa8-e97d-435e-90ff-311900d1ad4a",
+      "rule_name": "Financial Eligibility",
+      "result": "FAIL",
+      "reason": "age (20) must be at least 21; credit_score (650) must be at least 700; debt_ratio (0.5) must be less than 0.4; net_worth (50000) must be greater than 1000000",
+      "predicate_results": [
+        {
+          "field": "age",
+          "operator": ">=",
+          "expected": 21,
+          "actual": 20,
+          "passed": false,
+          "reason": "age (20) must be at least 21"
+        },
+        {
+          "field": "credit_score",
+          "operator": ">=",
+          "expected": 700,
+          "actual": 650,
+          "passed": false,
+          "reason": "credit_score (650) must be at least 700"
+        },
+        {
+          "field": "debt_ratio",
+          "operator": "<",
+          "expected": 0.4,
+          "actual": 0.5,
+          "passed": false,
+          "reason": "debt_ratio (0.5) must be less than 0.4"
+        },
+        {
+          "field": "net_worth",
+          "operator": ">",
+          "expected": 1000000,
+          "actual": 50000,
+          "passed": false,
+          "reason": "net_worth (50000) must be greater than 1000000"
+        }
+      ]
+    }
+  ]
 }
 ```
 
-## 📈 Future Enhancements
+**Note**: All four predicates failed, showing detailed reasons for each. The user needs to either: (1) meet all three criteria in the first branch, OR (2) have net_worth > $1M.
 
-Potential improvements for production use:
+### Example 3: Multiple Rules Evaluation
 
-- Database support (PostgreSQL, MongoDB)
-- OR logic support for predicates
-- Nested predicate groups
-- Rule versioning and history
-- Authentication and authorization
-- Rate limiting
-- Audit logging
-- Batch evaluation
-- Rule testing/simulation
-- Import/export functionality
+**Rules**:
+1. Geographic Eligibility: `(country in ['USA', 'Canada']) OR (country in ['UK', 'Germany'] AND credit_score >= 650)`
+2. Fraud Detection: `login_attempts <= 3 AND ip_country == account_country AND notes not_contains 'fraud'`
 
-## 📄 License
+**Scenario**: Evaluate a payload against two rules simultaneously
 
-This is a demonstration project for technical assessment purposes.
+```bash
+curl -X POST http://localhost:8000/api/v1/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": {
+      "country": "Canada",
+      "credit_score": 720,
+      "login_attempts": 2,
+      "ip_country": "Canada",
+      "account_country": "Canada",
+      "notes": "Active user"
+    },
+    "rule_ids": [
+      "c3bf418d-d5c3-4fdd-984d-4cff14e9627b",
+      "d1963b85-007f-447f-a74e-d1f1ab2d9dbe"
+    ]
+  }'
+```
+
+**Result**: Both rules will PASS - user is from Canada (allowed country) and passes all fraud checks.
+
+### Example 4: Field-to-Field Comparison (PASS)
+
+**Rule**: Password and Security Check
+**Expression**: `password == confirm_password AND password_length >= 8`
+**Scenario**: Demonstrates field-to-field comparison where password must match confirm_password
+
+```bash
+curl -X POST http://localhost:8000/api/v1/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": {
+      "password": "SecurePass123",
+      "confirm_password": "SecurePass123",
+      "password_length": 13
+    },
+    "rule_ids": ["7e936fcb-5c09-4085-9e37-b9e7019a593b"]
+  }'
+```
+
+**Response:**
+```json
+{
+  "result": "PASS",
+  "reasons": [
+    "Password and Security Check: Password and Security Check passed all conditions"
+  ],
+  "details": [
+    {
+      "rule_id": "7e936fcb-5c09-4085-9e37-b9e7019a593b",
+      "rule_name": "Password and Security Check",
+      "result": "PASS",
+      "reason": "Password and Security Check passed all conditions",
+      "predicate_results": [
+        {
+          "field": "password",
+          "operator": "==",
+          "expected": "SecurePass123",
+          "actual": "SecurePass123",
+          "passed": true,
+          "reason": "password == confirm_password check passed"
+        },
+        {
+          "field": "password_length",
+          "operator": ">=",
+          "expected": 8,
+          "actual": 13,
+          "passed": true,
+          "reason": "password_length passed >= check"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Note**: The first comparison shows field-to-field validation where `password` field is compared to `confirm_password` field.
+
+### Example 5: Missing Fields (FAIL)
+
+**Rule**: Financial Eligibility
+**Expression**: `(age >= 21 AND credit_score >= 700 AND debt_ratio < 0.4) OR net_worth > 1000000`
+**Scenario**: Payload is missing required fields - demonstrates clear error messaging
+
+```bash
+curl -X POST http://localhost:8000/api/v1/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": {
+      "age": 25
+    },
+    "rule_ids": ["0f825fa8-e97d-435e-90ff-311900d1ad4a"]
+  }'
+```
+
+**Response:**
+```json
+{
+  "result": "FAIL",
+  "reasons": [
+    "Financial Eligibility: Missing required fields: debt_ratio, net_worth, credit_score"
+  ],
+  "details": [
+    {
+      "rule_id": "0f825fa8-e97d-435e-90ff-311900d1ad4a",
+      "rule_name": "Financial Eligibility",
+      "result": "FAIL",
+      "reason": "Missing required fields: debt_ratio, net_worth, credit_score",
+      "predicate_results": [
+        {
+          "error": "Missing required fields: debt_ratio, net_worth, credit_score",
+          "passed": false
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Note**: The system identifies all missing fields upfront before attempting evaluation, providing clear feedback to the user.
+
+
+## Assumptions and Design Decisions
+
+The system is built on several key assumptions and design decisions that balance simplicity, maintainability, and production-readiness:
+
+- **File-Based Storage**: JSON file storage for simplicity and portability
+- **Smart Reason Generation**: Auto-generated human-readable explanations
+- **Every predicate reasoning**: Each predicate decision is sent back in the api and no short circuiting happens for OR chains
+- **Expression Validation**: Fail-fast validation at rule creation time if the expression is invalid
+- **Immutable Domain Models**: Ensures evaluation reproducibility
+- **No Authentication**: Assuming auth is not a priority here as its a demo project
+- **Non AI solution**: Because the use case is to give a deterministic answer for every check, i decided to go with a simple logic based solution, so that same payload gives you the same response every time. Thats not to say its not possible with AI (and structured outputs) but made a design decision to use a non ai solution here.
 
 ---
 
-**Built with ❤️ for Rekord**
+## Edge Cases Handled
 
+The system handles numerous edge cases to ensure robust operation:
+
+- Missing fields in payloads
+- Type mismatches between expected and actual values
+- Invalid expression syntax with helpful error messages
+- Field-to-field comparisons with missing fields
+- Boolean and null value handling
+- Array comparison validations
+
+---
+
+## What's Next?
+
+Since this is a take home, I made a few design decisions that i wouldnt neccesarily make in production. here are some short term and long term improvements for this project
+
+**Immediate Improvements:**
+- Database integration instead of fetching from a file
+- Enhanced testing coverage
+- Logging wherever required
+- A slightly nicer UI :)
+
+**Long-Term Features:**
+- Adding AI for the user to be able to add a natural language prompt and for an LLM to transform it into the format our api requires
+- we can also do the decision making using an LLM with structured outputs. This will however come with an eval system to ensure as much determinism as we can
+- Derived fields or formulas: currently you cannot specify `income-expenditure<300` type expressions. We can introduce a concept for users to specify a derived field like `savings` for the above example, which is computed as `income-expenditure`. Then if the request payload doesnt have savings but has income and expenditure fields, that should still be evaluated succesfully
+
+
+---
+
+**Technical Details**: [technical_architecture.md](./docs/technical_architecture.md)

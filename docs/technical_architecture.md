@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides detailed technical information about the Rekord Rule Evaluator System's architecture, implementation details, and design decisions. For a high-level overview, see [SYSTEM_SUMMARY.md](../SYSTEM_SUMMARY.md).
+This document provides detailed technical information about the Rekord Rule Evaluator System's architecture, implementation details, and design decisions. For a high-level overview, see [README.md](../README.md.md).
 
 ---
 
