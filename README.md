@@ -171,6 +171,8 @@ Once you run the docker command, the following services should become available
 
 ### Video Walkthrough
 
+https://drive.google.com/file/d/1eCrDm8SlRgJQ8I1eSUNq0LsXXyXEbOuB/view?usp=sharing
+
 
 ### Live Demo
 The current setup is hosted on an ec2
