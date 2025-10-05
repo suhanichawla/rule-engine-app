@@ -1,0 +1,50 @@
+graph TB
+    subgraph L1["Layer 1: Domain - Pure Business Logic"]
+        D1["models.py<br/>expression_parser.py<br/>expression_evaluator.py<br/>reason_generator.py<br/>exceptions.py"]
+    end
+
+    subgraph L2["Layer 2: Application - Use Cases"]
+        A1["ports.py - Interfaces"]
+        A2["services.py - RuleService, EvaluationService"]
+    end
+
+    subgraph L3["Layer 3: Adapters - External Interfaces"]
+        AD1["Inbound: api_router.py"]
+        AD2["Outbound: file_repository.py"]
+    end
+
+    subgraph L4["Layer 4: Infrastructure - Configuration"]
+        I1["config.py<br/>app_factory.py<br/>main.py"]
+    end
+
+    subgraph EXT["External Systems"]
+        E1["HTTP Clients"]
+        E2["File System"]
+    end
+
+    %% Dependencies flow inward
+    A2 -->|depends on| D1
+    A1 -->|defines contracts for| D1
+
+    AD1 -->|depends on| A2
+    AD1 -->|depends on| D1
+
+    AD2 -->|implements| A1
+    AD2 -->|uses| D1
+
+    I1 -->|wires up| AD1
+    I1 -->|wires up| AD2
+    I1 -->|wires up| A2
+
+    E1 -->|calls| AD1
+    AD2 -->|reads/writes| E2
+
+    style L1 fill:#ffe0b2,stroke:#e64a19,stroke-width:3px,color:#000
+    style L2 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    style L3 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style L4 fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style EXT fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+
+    classDef node fill:#fff,stroke:#333,stroke-width:1px,color:#000
+    class D1,A1,A2,AD1,AD2,I1,E1,E2 node
+
